@@ -1,23 +1,16 @@
 const AWS = require('aws-sdk')
 const config = require('../config/config')
 const fs = require('fs')
-const accessKeyId = '1245';
-const secretAccessKey = 'badri123';
-const TableName = config.aws_table_name;
 AWS.config.update({
-    region: 'local',
-    endpoint: 'http://localhost:8000',
-    accessKeyId: '1245',
-    secretAccessKey: "badri123"
+    region: config.aws_local_config.region,
+    endpoint: config.aws_local_config.endpoint,
+    accessKeyId: config.aws_local_config.accessKeyId,
+    secretAccessKey: config.aws_local_config.secretAccessKey,
 });
 
 var docClient = new AWS.DynamoDB.DocumentClient();
 
-const dynamoDb = new AWS.DynamoDB({
-    accessKeyId: accessKeyId,
-    secretAccessKey: secretAccessKey,
-    endpoint: config.aws_local_config.endpoint,
-});
+const dynamoDb = new AWS.DynamoDB();
 
 
 const employeeDetails = JSON.parse(fs.readFileSync('EmployeeData.json', 'utf-8'));
@@ -53,14 +46,35 @@ const createTable = async (req, res) => {
 const addEmployee = async (req, res) => {
 
     employeeDetails.forEach(ele => {
+        // Object.keys(ele).forEach((key) => {
+        // console.log(key, ":", ele[key])
 
         var params = {
             TableName: config.aws_table_name,
             Item: {
+                // key: ele[key]
                 "employeeId": ele.id,
                 "name": ele.name,
                 "email": ele.email,
-                "password": ele.password
+                "password": ele.password,
+                "about": ele.about,
+                "token": ele.token,
+                "country": ele.token,
+                "location": ele.location,
+                "lng": ele.lng,
+                "lat": ele.lat,
+                "dob": ele.dob,
+                "gender": ele.gender,
+                "userType": ele.userType,
+                "userStatus": ele.userStatus,
+                "profilePicture": ele.profilePicture,
+                "coverPicture": ele.coverPicture,
+                "enablefollowme": ele.enablefollowme,
+                "sendmenotifications": ele.sendmenotifications,
+                "sendTextmessages": ele.sendTextmessages,
+                "enabletagging": ele.enabletagging,
+                "createdAt": ele.createdAt
+
             }
         };
 
@@ -72,9 +86,9 @@ const addEmployee = async (req, res) => {
                 console.log("Added")
             }
         })
+
     })
     res.json("added")
-
 
 }
 
@@ -104,15 +118,15 @@ const getEmployee = async (req, res) => {
 
 const getSpecificEmployee = async (req, res) => {
     let { id } = req.body
-    let scanResults = []
+    console.log(id)
     var params = {
         Key: {
-            "employeeId": { "N": id },
+            "employeeId": id,
 
         },
         TableName: config.aws_table_name
     };
-    dynamoDb.getItem(params, (err, data) => {
+    docClient.get(params, (err, data) => {
         if (err) {
             res.status(400).json({
                 "status": "Error",
@@ -171,5 +185,15 @@ const deleteEmployee = async (req, res) => {
             res.status(200).json({ "message": `Deleted id: ${id}` });
         }
     });
+    // const params = {
+    //     TableName: config.aws_table_name
+    // }
+    // dynamoDb.deleteTable(params, (err, data) => {
+    //     if (err) {
+    //         console.log(err)
+    //     } else {
+    //         console.log(data.TableDescription)
+    //     }
+    // })
 }
 module.exports = { addEmployee, getEmployee, createTable, getSpecificEmployee, updateEmployee, deleteEmployee }
